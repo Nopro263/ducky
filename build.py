@@ -36,7 +36,7 @@ def os_detect(device: str) -> bool:
 
 def flash_device(device: str):
     print("downloading firmware.uf2")
-    file,m = urllib.request.urlretrieve("https://github.com/Nopro263/ducky/releases/latest/download/firmware.uf2")
+    file,m = urllib.request.urlretrieve("https://github.com/Nopro263/circuitpython/releases/latest/download/firmware.uf2")
     print("writing firmware.uf2")
     shutil.copyfile(file, os.path.join(device, "firmware.uf2"))
 
