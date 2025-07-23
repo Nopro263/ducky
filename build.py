@@ -28,7 +28,7 @@ def os_detect(device: str) -> bool:
     if os.path.exists(os.path.join(dirname, "DUCKY")):
         return OS.CIRCUITDUCKY
     
-    if ("code.py", "boot_out.txt") in files:
+    if "code.py" in files or "main.py" in files or "boot.py" in files:
         return OS.CIRCUITPYTHON 
 
     return OS.UNKNOWN
@@ -57,6 +57,15 @@ def wait_for_remount(dir: str):
     for i in range(10):
         if os.path.exists(device):
             print()
+            for file in os.listdir(device):
+                if file.startswith("."):
+                    continue
+                if os.path.isdir(file):
+                    shutil.rmtree(file)
+                else:
+                    os.remove(file)
+
+            shutil.copytree("lib", os.path.join(device, "lib"))
             copy_to_device(device)
             return
         
@@ -66,16 +75,7 @@ def wait_for_remount(dir: str):
     error("Device did not remount after 10s")
 
 def copy_to_device(device: str):
-    for file in os.listdir(device):
-        if file.startswith("."):
-            continue
-        if os.path.isdir(file):
-            shutil.rmtree(file)
-        else:
-            os.remove(file)
-
     shutil.copytree("src", device, dirs_exist_ok=True)
-    shutil.copytree("lib", os.path.join(device, "lib"))
 
 
 def error(msg: str):
