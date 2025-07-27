@@ -1,8 +1,9 @@
 import board
 import digitalio
 import time
+import os
 
-from utils import neopixel_init, neopixel_show
+from utils import neopixel_init, neopixel_show, error
 
 btn = digitalio.DigitalInOut(board.GP25)                                    
 btn.direction = digitalio.Direction.INPUT                                   
@@ -23,3 +24,8 @@ if not btn.value:
     neopixel_show(0,0,0)
 
     sys.exit(1)
+
+for script in os.listdir("/scripts"):
+    pass
+else:
+    error("No scripts were found in /scripts")

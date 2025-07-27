@@ -13,9 +13,6 @@ class OS(enum.IntEnum):
     CIRCUITDUCKY = 3
 
 def os_detect(device: str) -> bool:
-    if device.endswith(os.path.sep):
-        device = device[:-1]
-    
     files = os.listdir(device)
     dirname = os.path.dirname(device)
     devicename = os.path.basename(device)
@@ -57,13 +54,6 @@ def wait_for_remount(dir: str):
     for i in range(10):
         if os.path.exists(device):
             print()
-            for file in os.listdir(device):
-                if file.startswith("."):
-                    continue
-                if os.path.isdir(file):
-                    shutil.rmtree(file)
-                else:
-                    os.remove(file)
 
             shutil.copytree("lib", os.path.join(device, "lib"))
             copy_to_device(device)
@@ -76,6 +66,7 @@ def wait_for_remount(dir: str):
 
 def copy_to_device(device: str):
     shutil.copytree("src", device, dirs_exist_ok=True)
+    shutil.copytree("scripts", os.path.join(device, "scripts"), dirs_exist_ok=True, ignore=lambda _,a: [".keep"])
 
 
 def error(msg: str):
@@ -107,6 +98,9 @@ parser.add_argument("-y", "--yes", help="accept all questions", required=False, 
 args = parser.parse_args()
 
 drive: str = args.drive
+
+if drive.endswith(os.path.sep):
+    drive = drive[:-1]
 
 if not os.path.exists(drive):
     error("The specified device was not found")
