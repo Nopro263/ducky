@@ -80,6 +80,9 @@ def run_file(file):
                 elif command == "DELAY":
                     t = read_int_or_var(args[0])
                     time.sleep(t/1000.0)
+                elif command == "WAIT_FOR_BUTTON_PRESS":
+                    while btn.value:
+                        pass
                 ### MORE COMMANDS HERE ###
                 else:
                     if command == "INJECT_MOD":
