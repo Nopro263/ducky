@@ -15,11 +15,18 @@ neopixel_show(0,0,0)
 
 keyboard = Keyboard()
 
+vars = {}
+functions = {}
+function_stack = []
+
 def read_int_or_var(value):
     if value.startswith("$"):
-        raise AssertionError("VARs not implemented")
+        return vars[value]
     else:
         return int(value)
+
+def execute_calculation(args):
+    return read_int_or_var(args[0]) # other stuff supported in the future
 
 def run_file(file):
     print()
@@ -27,15 +34,16 @@ def run_file(file):
     line_count = 0
 
     with open("/scripts/" + file) as f:
-        for line in f.readlines():
-            line = line[:-1] # readlines does not strip \n
+        lines = f.readlines()
+        while line_count < len(lines):
+            line = lines[line_count][:-1] # readlines does not strip \n
 
             try:
                 line_count += 1
                 if not line:
                     continue
 
-                parts = line.split(" ", 1)
+                parts = line.lstrip().split(" ", 1)
                 command = parts[0].upper()
                 if len(parts) > 1:
                     args_string = parts[1]
@@ -77,13 +85,50 @@ def run_file(file):
                             else:
                                 keyboard.write((line[1:] if line[0] == "\t" else line) + "\n")
                         line_handler.append(stringln_handler)
+                
                 elif command == "DELAY":
                     t = read_int_or_var(args[0])
                     time.sleep(t/1000.0)
+                
                 elif command == "WAIT_FOR_BUTTON_PRESS":
                     while btn.value:
                         pass
+                
+                elif command == "VAR":
+                    if args[1] != "=":
+                        raise AttributeError("???")
+                    
+                    if args[2].upper() == "TRUE":
+                        args[2] = "1"
+                    elif args[2].upper() == "FALSE":
+                        args[2] = "0"
+
+                    if args[0] in vars:
+                        raise ArithmeticError("variable already declared")
+                    
+                    vars[args[0]] = read_int_or_var(args[2])
+                elif command == "FUNCTION":
+                    function_name = args[0][:-2]
+                    function_entry = line_count
+                    print(function_name, function_entry)
+                    def function_handler():
+                        if command == "END_FUNCTION":
+                            functions[function_name] = function_entry
+                            line_handler.pop()
+                    line_handler.append(function_handler)
+                elif command == "END_FUNCTION":
+                    line_count = function_stack.pop()
+                    continue
                 ### MORE COMMANDS HERE ###
+                elif command.startswith("$"):
+                    if args[0] != "=":
+                        raise AttributeError("???")
+                    vars[parts[0]] = execute_calculation(args[1:])
+                elif command.endswith("()"): # raw function call
+                    function_stack.append(line_count)
+                    line_count = functions[parts[0][:-2]]
+                    continue
+
                 else:
                     if command == "INJECT_MOD":
                         raw = args
