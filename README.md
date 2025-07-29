@@ -14,3 +14,6 @@ With all that said, you should (eventually) be able to run this code without the
 # Notes
 - Please note that this repository is in very early development and thus may not contain all features
 - The firmware and code have only been tested on an orpheus-pico-v1 all other board are currently not supported.
+- Some buttons are different
+  - PAUSE BREAK is called PAUSE_BREAK or PAUSE
+  - MENU APP is called MENU_APP

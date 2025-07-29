@@ -23,6 +23,10 @@ button_function = None
 button_enabled = True
 executing_button = False
 
+sleep_start = 0
+sleep_duration = 0
+sleeping = False
+
 def read_int_or_var(value):
     if value.startswith("$"):
         return vars[value]
@@ -33,6 +37,7 @@ def execute_calculation(args):
     return read_int_or_var(args[0]) # other stuff supported in the future
 
 def run_file(file):
+    global button_function, button_enabled, executing_button, sleep_start, sleep_duration, sleeping
     print()
     line_handler = [] # a stack of callables
     line_count = 0
@@ -41,7 +46,7 @@ def run_file(file):
         lines = f.readlines()
         while line_count < len(lines):
             line = lines[line_count][:-1] # readlines does not strip \n
-
+            print(line_count)
             try:
                 line_count += 1
                 if not line:
@@ -59,12 +64,22 @@ def run_file(file):
                 if line_handler:
                     line_handler[-1]()
                     continue
-                
+                #print(not btn.value,button_enabled,button_function,executing_button)
                 if not btn.value and button_enabled and button_function and not executing_button:
                     executing_button = True
-                    function_stack.append(line_count)
+                    function_stack.append(line_count-1)
                     line_count = button_function
                     continue
+
+                if not executing_button:
+                    if sleep_start + sleep_duration > time.monotonic_ns():
+                        time.sleep(0.001)
+                        line_count -= 1
+                        continue
+                    elif sleeping:
+                        sleeping = False
+                        line_count += 1
+                        continue
 
                 if command == "REM":
                     continue #Do Nothing
@@ -98,7 +113,11 @@ def run_file(file):
                 
                 elif command == "DELAY":
                     t = read_int_or_var(args[0])
-                    time.sleep(t/1000.0)
+                    sleep_duration = t * 1000000
+                    sleep_start = time.monotonic_ns()
+                    sleeping = True
+                    line_count -= 1
+                    continue
                 
                 elif command == "WAIT_FOR_BUTTON_PRESS":
                     while btn.value:
@@ -132,6 +151,7 @@ def run_file(file):
                 elif command == "BUTTON_DEF":
                     function_entry = line_count
                     def function_handler():
+                        global button_function
                         if command == "END_BUTTON":
                             button_function = function_entry
                             line_handler.pop()
