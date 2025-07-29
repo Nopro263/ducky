@@ -19,6 +19,10 @@ vars = {}
 functions = {}
 function_stack = []
 
+button_function = None
+button_enabled = True
+executing_button = False
+
 def read_int_or_var(value):
     if value.startswith("$"):
         return vars[value]
@@ -56,6 +60,12 @@ def run_file(file):
                     line_handler[-1]()
                     continue
                 
+                if not btn.value and button_enabled and button_function and not executing_button:
+                    executing_button = True
+                    function_stack.append(line_count)
+                    line_count = button_function
+                    continue
+
                 if command == "REM":
                     continue #Do Nothing
                 elif command == "REM_BLOCK":
@@ -110,7 +120,6 @@ def run_file(file):
                 elif command == "FUNCTION":
                     function_name = args[0][:-2]
                     function_entry = line_count
-                    print(function_name, function_entry)
                     def function_handler():
                         if command == "END_FUNCTION":
                             functions[function_name] = function_entry
@@ -119,6 +128,22 @@ def run_file(file):
                 elif command == "END_FUNCTION":
                     line_count = function_stack.pop()
                     continue
+
+                elif command == "BUTTON_DEF":
+                    function_entry = line_count
+                    def function_handler():
+                        if command == "END_BUTTON":
+                            button_function = function_entry
+                            line_handler.pop()
+                    line_handler.append(function_handler)
+                elif command == "END_BUTTON":
+                    executing_button = False
+                    line_count = function_stack.pop()
+                    continue
+                elif command == "DISABLE_BUTTON":
+                    button_enabled = False
+                elif command == "ENABLE_BUTTON":
+                    button_enabled = True
                 ### MORE COMMANDS HERE ###
                 elif command.startswith("$"):
                     if args[0] != "=":
