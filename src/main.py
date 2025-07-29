@@ -15,6 +15,12 @@ neopixel_show(0,0,0)
 
 keyboard = Keyboard()
 
+def read_int_or_var(value):
+    if value.startswith("$"):
+        raise AssertionError("VARs not implemented")
+    else:
+        return int(value)
+
 def run_file(file):
     print()
     line_handler = [] # a stack of callables
@@ -71,6 +77,9 @@ def run_file(file):
                             else:
                                 keyboard.write((line[1:] if line[0] == "\t" else line) + "\n")
                         line_handler.append(stringln_handler)
+                elif command == "DELAY":
+                    t = read_int_or_var(args[0])
+                    time.sleep(t/1000.0)
                 ### MORE COMMANDS HERE ###
                 else:
                     if command == "INJECT_MOD":
