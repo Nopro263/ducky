@@ -40,9 +40,9 @@ def error(description="", exit=False):
 
     for file in os.listdir("/"):
         if file.startswith("error_report_"):
-            i = int(file[13:])
+            i = int(file[13:-4])
 
-            if i > n:
+            if i >= n:
                 n = i+1
     
     name = "error_report_" + str(n) + ".txt"

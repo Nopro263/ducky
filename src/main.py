@@ -4,6 +4,7 @@ import time
 import os
 
 from utils import neopixel_init, neopixel_show, error
+from layout_manager import Keyboard
 
 btn = digitalio.DigitalInOut(board.GP25)                                    
 btn.direction = digitalio.Direction.INPUT                                   
@@ -11,6 +12,8 @@ btn.pull = digitalio.Pull.UP
 
 neopixel_init(board.GP24)
 neopixel_show(0,0,0)
+
+keyboard = Keyboard()
 
 def run_file(file):
     print()
@@ -29,8 +32,10 @@ def run_file(file):
                 parts = line.split(" ", 1)
                 command = parts[0].upper()
                 if len(parts) > 1:
+                    args_string = parts[1]
                     args = parts[1].split(" ")
                 else:
+                    args_string = ""
                     args = []
 
                 if line_handler:
@@ -45,13 +50,34 @@ def run_file(file):
                             line_handler.pop()
 
                     line_handler.append(rem_handler)
+                elif command == "STRING":
+                    if args_string:
+                        keyboard.write(args_string.strip())
+                    else:
+                        def string_handler():
+                            if command == "END_STRING":
+                                line_handler.pop()
+                            else:
+                                keyboard.write(line.lstrip())
+                        line_handler.append(string_handler)
+        
+                elif command == "STRINGLN":
+                    if args_string:
+                        keyboard.write(args_string.strip() + "\n")
+                    else:
+                        def stringln_handler():
+                            if command == "END_STRINGLN":
+                                line_handler.pop()
+                            else:
+                                keyboard.write((line[1:] if line[0] == "\t" else line) + "\n")
+                        line_handler.append(stringln_handler)
                 ### MORE COMMANDS HERE ###
                 else:
                     raise Exception("Unknown command " + command)
             
             except Exception as e:
                 error(
-                    description="Error " + str(e) + " in line " + str(line_count) + ":\n" + line if len(line) <= 10 else line[:7] + "...",
+                    description="Error " + str(e) + " in line " + str(line_count) + ":\n" + (line if len(line) <= 50 else line[:7] + "..."),
                     exit=False
                 )
                 raise e
