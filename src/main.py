@@ -73,6 +73,12 @@ def run_file(file):
                         line_handler.append(stringln_handler)
                 ### MORE COMMANDS HERE ###
                 else:
+                    raw = [command] + args
+                    buttons = keyboard.get_codes(raw)
+                    keyboard.hold(buttons)
+                    time.sleep(0.050)
+                    keyboard.release(buttons)
+                    continue
                     raise Exception("Unknown command " + command)
             
             except Exception as e:

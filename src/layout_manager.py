@@ -62,18 +62,79 @@ class Keyboard:
         self.keyboard = _Keyboard(usb_hid.devices)
         self.layout = None
         self.keycode = None
+        self.keymap = {}
 
         self.set_layout(layout)
     
     def set_layout(self, layout):
         self.layout = Keyboard.layouts[layout](self.keyboard)
-        self.keycode = Keyboard.layouts[layout]
+        self.keycode = Keyboard.keycodes[layout]
+
+        self._gen_override()
     
     def write(self, text):
         self.layout.write(text)
     
     def hold(self, button):
-        self.keyboard.press(getattr(self.keycode,button))
+        if type(button) == list:
+            self.keyboard.press(*button)
+        else:
+            self.keyboard.press(button)
     
     def release(self, button):
-        self.keyboard.release(getattr(self.keycode,button))
+        if type(button) == list:
+            self.keyboard.release(*button)
+        else:
+            self.keyboard.release(button)
+    
+    def get_codes(self, button):
+        if type(button) == list:
+            codes = []
+            for b in button:
+                codes.append(self._get_code(b))
+            return codes
+        else:
+            return [self._get_code(button)]
+    
+    def _get_code(self, button):
+        button = button.upper()
+        if button in self.keymap:
+            return self.keymap[button]
+    
+        return getattr(self.keycode, button)
+    
+    def _gen_override(self):
+        self.o("UP", "UP_ARROW") #idk
+        self.o("LEFT", "LEFT_ARROW")
+        self.o("DOWN", "DOWN_ARROW")
+        self.o("RIGHT", "RIGHT_ARROW")
+
+        self.o("UPARROW", "UP_ARROW")
+        self.o("LEFTARROW", "LEFT_ARROW")
+        self.o("DOWNARROW", "DOWN_ARROW")
+        self.o("RIGHTARROW", "RIGHT_ARROW")
+
+        self.o("PAGEUP", "PAGE_UP")
+        self.o("PAGEDOWN", "PAGE_DOWN")
+
+        self.o("DEL", "DELETE", disable_old=False)
+
+        self.o("PAUSE_BREAK", "PAUSE", disable_old=False)
+
+        self.o("PRINTSCREEN", "PRINT_SCREEN")
+
+        self.o("MENU_APP", "APPLICATION")
+        self.o("CTRL", "CONTROL", disable_old=False)
+        self.o("CAPSLOCK", "CAPS_LOCK")
+        self.o("NUMLOCK", "KEYPAD_NUMLOCK")
+        self.o("SCROLLOCK", "SCROLL_LOCK")
+
+
+    def o(self, name, button, disable_old=True):
+        try:
+            b = getattr(self.keycode, button)
+            self.keymap[name] = b
+            if disable_old:
+                self.keymap[button] = None
+        except AttributeError:
+            pass
